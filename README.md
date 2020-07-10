@@ -1,12 +1,14 @@
 # Android 图片轮播控件
 
-[![](https://jitpack.io/v/wenchaosong/Banner.svg)](https://jitpack.io/#wenchaosong/Banner)
-[![](https://img.shields.io/github/stars/wenchaosong/Banner.svg)](https://github.com/wenchaosong/Banner)
-[![](https://img.shields.io/github/issues/wenchaosong/Banner.svg)](https://github.com/wenchaosong/Banner)
+[![](https://api.bintray.com/packages/songwenchao0714/maven/Banner/images/download.svg)](https://bintray.com/songwenchao0714/maven/Banner)
+[![](https://img.shields.io/github/stars/wenchaosong/Banner?color=green)](https://github.com/wenchaosong/Banner)
+[![](https://img.shields.io/github/issues/wenchaosong/Banner?color=red)](https://github.com/wenchaosong/Banner)
+[![](https://img.shields.io/github/last-commit/wenchaosong/Banner?color=yellow)](https://github.com/wenchaosong/Banner)
+[![](https://img.shields.io/github/release-date/wenchaosong/Banner?color=orange)](https://github.com/wenchaosong/Banner)
 
 图片轮播类似控件比较多,但是真正好用的比较少,大家公认的项目[banner](https://github.com/youth5201314/banner)是比较好用的,
-但是作者已经很久没维护了,所以我在他的基础上优化了一部分,满足大家项目中常用的一些需求.<br>
-具体优化点:<br>
+但是作者已经很久没维护了,所以我在他的基础上优化了一部分,满足大家项目中常用的一些需求.
+> 具体优化点:<br>
 1.优化了自定义布局,不仅仅是一张图片;<br>
 2.优化了 onPageSelected 方法调用两次的 bug;<br>
 3.增加了多种 banner 样式
@@ -20,7 +22,19 @@
 
 所以在此希望大家有好的处理方式能提 pr,或者 issue,我会认真看,认真解决
 
+- [有问题先看注意事项](#注意事项)
+- [有问题先看注意事项](#注意事项)
+- [有问题先看注意事项](#注意事项)
+
 ## 效果图
+
+### apk 下载及动态展示
+
+[![](https://img.shields.io/badge/downloadAPK-Banner-ff69b4)](https://github.com/wenchaosong/Banner/releases/download/2.3.17/demo.apk)
+
+![效果示例](/pic/GIF.gif)
+
+### 部分效果图
 
 |模式|图片
 |---|---|
@@ -40,13 +54,9 @@
 
 #### Step 1.依赖banner
 ```
-repositories {
-        jcenter()
-        maven { url 'https://jitpack.io' }
-    }
-
 dependencies{
-    implementation 'com.github.wenchaosong:Banner:2.3.7'
+    implementation 'com.ms:banner:1.0.0'
+    implementation 'com.ms:banner-androidx:1.0.0'
 }
 ```
 或者引用本地lib
@@ -65,12 +75,7 @@ compile project(':rollbanner')
 
 #### Step 3.设置布局
 ```
-.setPages(list, new HolderCreator<BannerViewHolder>() {
-                    @Override
-                    public BannerViewHolder createViewHolder() {
-                        return new CustomViewHolder();
-                    }
-                })
+.setPages(arrList, new CustomViewHolder())
 
 class CustomViewHolder implements BannerViewHolder<String> {
 
@@ -105,12 +110,7 @@ protected void onCreate(Bundle savedInstanceState) {
     setContentView(R.layout.activity_main);
     Banner banner = (Banner) findViewById(R.id.banner);
     banner.setAutoPlay(true)
-            .setPages(list, new HolderCreator<BannerViewHolder>() {
-                @Override
-                public BannerViewHolder createViewHolder() {
-                    return new CustomViewHolder();
-                }
-            })
+            .setPages(arrList, new CustomViewHolder())
             .start();
 }
 ```
@@ -121,14 +121,18 @@ protected void onCreate(Bundle savedInstanceState) {
 protected void onStart() {
     super.onStart();
     //开始轮播
-    banner.startAutoPlay();
+    if (banner != null && banner.isPrepare() && !banner.isStart()) {
+        banner.startAutoPlay();
+    }
 }
 
 @Override
 protected void onStop() {
     super.onStop();
     //结束轮播
-    banner.stopAutoPlay();
+    if (banner != null && banner.isPrepare() && banner.isStart()) {
+        banner.stopAutoPlay();
+    }
 }
 ```
 
@@ -136,6 +140,13 @@ protected void onStop() {
 ```
 -keep class com.ms.banner.** {*;}
 ```
+
+## 注意事项
+
+- [setCurrentPage 方法不建议调用,因为使用的是成员变量保存,除非再次初始化,否则每次初始化都会先显示设定位置的图片](#注意事项)
+- [有问题先参考 demo](#注意事项)
+
+另只要是 banner 中布局中可以定义的,都可以重写,包括但不限于指示器,图片,文字等.各个模式相应的代码 demo 中已经有了,可以作为参考,如果有问题可以提 issue
 
 ### 属性和方法介绍
 
@@ -161,7 +172,8 @@ protected void onStop() {
 |page_left_margin|dimension|左边缩进的距离|
 |page_right_margin|dimension|右边缩进的距离|
 |arc_height|dimension|底部弧形的高度|
-|arc_background|reference|底部弧形的背景颜色|
+|arc_start_color|reference|底部弧形的起始颜色|
+|arc_end_color|reference|底部弧形的结束颜色|
 |arc_direction|enum|底部弧形的方向|
 
 ##### java 文件可调用的方法
@@ -172,20 +184,19 @@ setAutoPlay                 设置是否自动轮播
 setLoop                     设置是否循环
 setIndicatorGravity         设置指示器位置
 setBannerAnimation          设置滚动动画
-setOffscreenPageLimit       设置页面个数
 setBannerTitles             设置 title 数据
 setBannerStyle              设置样式
 setViewPagerIsScroll        设置是否可以滚动
 setPages                    设置数据源
+setCurrentPage              设置当前页
 update                      刷新
 updateBannerStyle           刷新样式
 start                       开始使用
+isPrepare                   是否加载完成
+isStart                     是否轮播中
 setIndicatorRes             设置指示器资源
 startAutoPlay               开始自动轮播
 stopAutoPlay                停止轮播
 setOnBannerClickListener    监听点击事件
 setOnPageChangeListener     监听页面变化事件
-releaseBanner               释放 banner
 ```
-
-各个模式相应的代码 demo 中已经有了就不再重复,有问题可以提 issue
